@@ -95,13 +95,29 @@ void loop() {
     }
 }
 
+// CONFIG ROBOT TOUR
+#define MIN_DUTY_CYCLE
+#define MAX_DUTY_CYCLE
+#define CONVERSION_CONSTANT_WHEEL_CIRCUMFERENCE
+#define DIST_BETWEEN_WHEELS
+
+#define TOLERANCE 0.0001f
+#define PI 3.14159f
 
 bool Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U)
 {
     /* Insert the nonlinear update transformation here
      *          x(k+1) = f[x(k), u(k)]
+
+     * Check the below for unit equivalence
      */
     
+    float_prec uleft_adj = U[0][0] > 0 ? map(abs(U[0][0]), MIN_DUTY_CYCLE, MAX_DUTY_CYCLE, 0, 1) : map(abs(U[0][0]), -MAX_DUTY_CYCLE, -MIN_DUTY_CYCLE, -1, 0);
+    float_prec uright_adj = U[1][0] > 0 ? map(abs(U[1][0]), MIN_DUTY_CYCLE, MAX_DUTY_CYCLE, 0, 1) : map(abs(U[1][0]), -MAX_DUTY_CYCLE, -MIN_DUTY_CYCLE, -1, 0);
+
+    X_Next[0][0] = 0.5f*(uleft_adj + uright_adj)(CONVERSION_CONSTANT_WHEEL_CIRCUMFERENCE);
+    X_Next[1][0] = abs(uleft_adj - uright_adj) < TOLERANCE ? X[1][0] : X[1][0] + (180f*X_Next[0][0]*SS_DT / (PI*PI* (.5f*(uleft_adj + uleft_adj)*(DIST_BETWEEN_WHEELS)/(abs(uleft_adj - uright_adj))) ));
+
     return true;
 }
 
