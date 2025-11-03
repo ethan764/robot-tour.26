@@ -112,11 +112,16 @@ bool Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U)
      * Check the below for unit equivalence
      */
     
-    float_prec uleft_adj = U[0][0] > 0 ? map(abs(U[0][0]), MIN_DUTY_CYCLE, MAX_DUTY_CYCLE, 0, 1) : map(abs(U[0][0]), -MAX_DUTY_CYCLE, -MIN_DUTY_CYCLE, -1, 0);
-    float_prec uright_adj = U[1][0] > 0 ? map(abs(U[1][0]), MIN_DUTY_CYCLE, MAX_DUTY_CYCLE, 0, 1) : map(abs(U[1][0]), -MAX_DUTY_CYCLE, -MIN_DUTY_CYCLE, -1, 0);
+    float_prec uleft_adj = (U[0][0] > 0 ? map(abs(U[0][0]), MIN_DUTY_CYCLE, MAX_DUTY_CYCLE, 0, 1) : map(abs(U[0][0]), -MAX_DUTY_CYCLE, -MIN_DUTY_CYCLE, -1, 0)) * CONVERSION_CONSTANT_WHEEL_CIRCUMFERENCE;
+    float_prec uright_adj = (U[1][0] > 0 ? map(abs(U[1][0]), MIN_DUTY_CYCLE, MAX_DUTY_CYCLE, 0, 1) : map(abs(U[1][0]), -MAX_DUTY_CYCLE, -MIN_DUTY_CYCLE, -1, 0)) * CONVERSION_CONSTANT_WHEEL_CIRCUMFERENCE;
 
-    X_Next[0][0] = 0.5f*(uleft_adj + uright_adj)(CONVERSION_CONSTANT_WHEEL_CIRCUMFERENCE);
-    X_Next[1][0] = abs(uleft_adj - uright_adj) < TOLERANCE ? X[1][0] : X[1][0] + (180f*X_Next[0][0]*SS_DT / (PI*PI* (.5f*(uleft_adj + uleft_adj)*(DIST_BETWEEN_WHEELS)/(abs(uleft_adj - uright_adj))) ));
+    X_Next[0][0] = 0.5f*(uleft_adj + uright_adj);
+
+    /* Going right is the positive rotation; calculated in radians */
+    X_Next[1][0] = abs(uleft_adj - uright_adj) < TOLERANCE ? X[1][0] : X[1][0] + X_Next[0][0]*SS_DT / ( (.5f*(uleft_adj + uleft_adj)*(DIST_BETWEEN_WHEELS)/((uleft_adj - uright_adj))) );
+
+    X_Next[2][0] = X[0][0]*cos(X[1][0]) + X[2][0];
+    X_Next[3][0] = X[0][0]*sin(X[1][0]) + X[3][0];
 
     return true;
 }
@@ -126,6 +131,8 @@ bool Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U)
     /* Insert the nonlinear measurement transformation here
      *          y(k)   = h[x(k), u(k)]
      */
+
+    
     
     return true;
 }
